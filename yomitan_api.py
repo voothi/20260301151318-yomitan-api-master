@@ -77,7 +77,10 @@ def ensure_single_instance() -> None:
 def delete_crowbarfile() -> None:
     try:
         if os.path.exists(crowbarfile_path):
-            os.remove(crowbarfile_path)
+            with open(crowbarfile_path, "r") as f:
+                content = f.read().strip()
+            if content and int(content) == os.getpid():
+                os.remove(crowbarfile_path)
     except Exception:
         pass
 

@@ -182,6 +182,19 @@ class TestEnsureSingleInstance(unittest.TestCase):
                  patch("sys.stdin.isatty", return_value=False):
                 # Should not raise
                 yomitan_api.ensure_single_instance()
+
+    def test_overwrites_empty_crowbar(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, ".crowbar")
+            # Create an empty crowbar file
+            open(path, 'w').close()
+            with patch.object(yomitan_api, "crowbarfile_path", path), \
+                 patch("sys.stdin.isatty", return_value=False):
+                yomitan_api.ensure_single_instance()
+            with open(path) as f:
+                content = f.read().strip()
+        self.assertEqual(content, str(os.getpid()), "Empty crowbar file should be overwritten with current PID")
+
     def test_no_crash_on_system_error(self):
         """Simulate Windows SystemError from os.kill(pid, 0)."""
         with tempfile.TemporaryDirectory() as tmpdir:

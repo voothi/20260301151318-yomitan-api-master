@@ -13,6 +13,9 @@ import types
 import unittest
 from unittest.mock import patch, mock_open, MagicMock
 
+# Ensure the project root is on the path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # ---------------------------------------------------------------------------
 # Helpers to import only the pure functions without running interactive code
 # ---------------------------------------------------------------------------

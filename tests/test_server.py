@@ -165,7 +165,6 @@ class TestEnsureSingleInstance(unittest.TestCase):
                  patch("sys.stdin.isatty", return_value=False):
                 # Should not raise
                 yomitan_api.ensure_single_instance()
-
     def test_no_crash_on_system_error(self):
         """Simulate Windows SystemError from os.kill(pid, 0)."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -180,6 +179,22 @@ class TestEnsureSingleInstance(unittest.TestCase):
             with open(path) as f:
                 content = f.read().strip()
         self.assertEqual(content, str(os.getpid()))
+
+    def test_ensure_single_instance_tty_exits(self):
+        """In a TTY, if another instance is alive, we should warn and exit(0) to protect daemon."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, ".crowbar")
+            with open(path, "w") as f:
+                f.write("987654321") # Mock PID
+
+            with patch.object(yomitan_api, "crowbarfile_path", path), \
+                 patch("yomitan_api.sys.stdin") as mock_stdin, \
+                 patch("yomitan_api.sys.exit") as mock_exit, \
+                 patch("yomitan_api.os.kill"), \
+                 patch("builtins.print"):
+                mock_stdin.isatty.return_value = True
+                yomitan_api.ensure_single_instance()
+                mock_exit.assert_called_once_with(0)
 
 
 # ---------------------------------------------------------------------------
@@ -258,20 +273,6 @@ class TestRequestHandler(unittest.TestCase):
 
         self.assertEqual(responses[0][0], 503)
         self.assertIn("Native messaging connection failed", responses[0][1])
-
-    def test_ensure_single_instance_tty_exits(self):
-        """In a TTY, if another instance is alive, we should warn and exit(0) to protect daemon."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = os.path.join(tmpdir, ".crowbar")
-            with open(path, "w") as f:
-                f.write(str(os.getpid())) # Current process is "already running"
-
-            with patch.object(yomitan_api, "crowbarfile_path", path), \
-                 patch("sys.stdin.isatty", return_value=True), \
-                 patch("sys.exit") as mock_exit, \
-                 patch("builtins.print"):  # Suppress warning output in tests
-                yomitan_api.ensure_single_instance()
-                mock_exit.assert_called_once_with(0)
 
     def test_blacklisted_path_responds_400(self):
         handler = self._make_handler("/favicon.ico")

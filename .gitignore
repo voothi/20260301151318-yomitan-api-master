@@ -2,3 +2,10 @@
 error.log
 request_example_results
 .history
+__pycache__/
+yomitan_api_brave.json
+yomitan_api_chrome.json
+yomitan_api_chromium.json
+yomitan_api_edge.json
+yomitan_api_firefox.json
+yomitan_api.bat

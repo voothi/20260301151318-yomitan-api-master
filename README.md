@@ -14,7 +14,7 @@
 
 2. [Download](https://github.com/Kuuuube/yomitan-api/archive/master.zip) and extract this repository to the location you wish to install the files.
 
-3. Run `python install_yomitan_api.py` and follow the prompts. If you do not see any errors, it has successfully installed.
+3. Run `python install_yomitan_api.py` and follow the prompts. Choose `0` (all browsers, recommended) or a specific browser by number. If you do not see any errors, it has successfully installed.
 
     **On forks of browsers such as Brave, you may need to install the API onto Chrome as well.**
 
@@ -77,3 +77,27 @@ By default, the api is hosted on `http://127.0.0.1:19633`. To change this, edit 
 ## Examples
 
 [Yomitan API Request Example Python](./request_example.py)
+
+## Troubleshooting
+
+### Windows: API not detected after installation
+
+If the Yomitan settings page shows "Failed to fetch" after running the installer:
+
+1. **Re-run the installer** — make sure to run it with a standard Python install (not Windows Store Python, see below). The installer will prompt `Choose browser (default 0):` — press Enter to install for all browsers at once.
+
+2. **Check the registry** — open `regedit` and verify that `HKEY_CURRENT_USER\SOFTWARE\<Browser>\NativeMessagingHosts\yomitan_api` exists and its `(Default)` value points to the correct `.json` file. If the key is missing, the installer did not run correctly.
+
+3. **Restart your browser** after installation.
+
+### Windows: Installation fails with Windows Store Python
+
+If Python was installed from the Microsoft Store (`WindowsApps\...` in `sys.executable`), the generated `.bat` file may fail to launch. The installer automatically detects this and writes `python` instead of the full path. If you still have issues, install Python from [python.org](https://www.python.org/downloads/) instead.
+
+### Windows: `ValueError: cannot read more than 33554432 bytes`
+
+This error appears in an old version of `yomitan_api.py`. Update to v1.1.0 — it includes a guard that returns `None` instead of attempting the oversized read.
+
+## Release Notes
+
+[release-notes.md](./release-notes.md)

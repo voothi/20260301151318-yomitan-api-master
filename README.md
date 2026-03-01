@@ -84,9 +84,9 @@ By default, the api is hosted on `http://127.0.0.1:19633`. To change this, edit 
 
 If the Yomitan settings page shows "Failed to fetch" after running the installer:
 
-1. **Re-run the installer** — make sure to run it with a standard Python install (not Windows Store Python, see below). The installer will prompt `Choose browser (default 0):` — press Enter to install for all browsers at once.
+1. **Re-run the installer** — make sure to run it with a standard Python install (not Windows Store Python, see below). The installer will prompt `Choose browser (default 0):` — press Enter to install for all browsers at once. **Note: Administrator privileges are normally not required**, as the installer writes to the current user's registry hive (`HKEY_CURRENT_USER`).
 
-2. **Check the registry** — open `regedit` and verify that `HKEY_CURRENT_USER\SOFTWARE\<Browser>\NativeMessagingHosts\yomitan_api` exists and its `(Default)` value points to the correct `.json` file. If the key is missing, the installer did not run correctly.
+2. **Check the registry** — open `regedit` and verify that `HKEY_CURRENT_USER\SOFTWARE\<Browser>\NativeMessagingHosts\yomitan_api` exists and its `(Default)` value points to the correct `.json` file. If the key is missing after running the script, Check your antivirus or permissions for the script folder itself.
 
 3. **Restart your browser** after installation.
 

@@ -35,7 +35,7 @@ BROWSER_DATA = {
     },
     "brave": {
         "extension_id_key": "allowed_origins",
-        "extension_ids": ["chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/"],
+        "extension_ids":["chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/"],
     },
 }
 
@@ -48,7 +48,7 @@ PLATFORM_DATA = {
                 "path": os.path.expanduser("~/.mozilla/native-messaging-hosts/"),
             },
             "chrome": {
-                "methods":["file"],
+                "methods": ["file"],
                 "path": os.path.expanduser("~/.config/google-chrome/NativeMessagingHosts/"),
             },
             "chromium": {
@@ -62,25 +62,25 @@ PLATFORM_DATA = {
         },
     },
     "windows": {
-        "platform_aliases":["win32", "cygwin"],
+        "platform_aliases": ["win32", "cygwin"],
         "manifest_install_data": {
             "firefox": {
-                "methods":["file", "registry"],
+                "methods": ["file", "registry"],
                 "path": DIR,
                 "registry_path": f"SOFTWARE\\Mozilla\\NativeMessagingHosts\\{NAME}",
             },
             "chrome": {
-                "methods":["file", "registry"],
+                "methods": ["file", "registry"],
                 "path": DIR,
                 "registry_path": f"SOFTWARE\\Google\\Chrome\\NativeMessagingHosts\\{NAME}",
             },
             "chromium": {
-                "methods":["file", "registry"],
+                "methods": ["file", "registry"],
                 "path": DIR,
                 "registry_path": f"SOFTWARE\\Chromium\\NativeMessagingHosts\\{NAME}",
             },
             "edge": {
-                "methods":["file", "registry"],
+                "methods": ["file", "registry"],
                 "path": DIR,
                 "registry_path": f"SOFTWARE\\Microsoft\\Edge\\NativeMessagingHosts\\{NAME}",
             },
@@ -127,14 +127,14 @@ def manifest_get(browser: str, messaging_host_path: str, additional_ids: list) -
     manifest = copy.deepcopy(MANIFEST_TEMPLATE)
     data = BROWSER_DATA[browser]
     manifest["path"] = messaging_host_path
-    manifest[data["extension_id_key"]] =[]
+    manifest[data["extension_id_key"]] = []
     for extension_id in data["extension_ids"] + additional_ids:
         manifest[data["extension_id_key"]].append(extension_id)
     return json.dumps(manifest, indent=4)
 
-def manifest_install_file(manifest: str, path: str) -> None:
+def manifest_install_file(manifest: str, path: str, filename: str) -> None:
     os.makedirs(path, exist_ok=True)
-    with open(os.path.join(path, f"{NAME}.json"), "w") as f:
+    with open(os.path.join(path, filename), "w") as f:
         f.write(manifest)
 
 platform_data = platform_data_get()
@@ -175,6 +175,7 @@ if platform_data["platform"] == "mac":
     try:
         os.makedirs(mac_install_path, exist_ok=True)
         shutil.copy(os.path.join(DIR, "yomitan_api.py"), script_path)
+        os.chmod(script_path, 0o755)  # Make executable, crucial for macOS Native Messaging
         print(f'File copied from {os.path.join(DIR, "yomitan_api.py")} to {script_path}')
     except Exception as e:
         print(f"An error occurred during copying: {e}")
@@ -183,10 +184,13 @@ for browser in selected_browsers:
     manifest_install_data = platform_data["manifest_install_data"][browser]
     manifest = manifest_get(browser, script_path, additional_extension_ids)
     
+    # Prevent overwriting JSON on Windows if installing for multiple browsers
+    manifest_filename = f"{NAME}_{browser}.json" if platform_data["platform"] == "windows" else f"{NAME}.json"
+    
     for method in manifest_install_data["methods"]:
         if method == "file":
             try:
-                manifest_install_file(manifest, manifest_install_data["path"])
+                manifest_install_file(manifest, manifest_install_data["path"], manifest_filename)
                 print(f"[{browser}] Manifest file created.")
             except Exception as e:
                 print(f"[{browser}] Failed to create manifest: {e}")
@@ -196,7 +200,7 @@ for browser in selected_browsers:
             try:
                 winreg.CreateKey(winreg.HKEY_CURRENT_USER, manifest_install_data["registry_path"])
                 with winreg.OpenKey(winreg.HKEY_CURRENT_USER, manifest_install_data["registry_path"], 0, winreg.KEY_WRITE) as registry_key:
-                    winreg.SetValueEx(registry_key, "", 0, winreg.REG_SZ, os.path.join(manifest_install_data["path"], NAME + ".json"))
+                    winreg.SetValueEx(registry_key, "", 0, winreg.REG_SZ, os.path.join(manifest_install_data["path"], manifest_filename))
                 print(f"[{browser}] Registry key added successfully.")
             except Exception as e:
                 print(f"[{browser}] Failed to add registry key: {e}")

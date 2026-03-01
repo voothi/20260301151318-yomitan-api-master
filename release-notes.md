@@ -2,6 +2,8 @@
 
 ## v1.1.0
 
+[RFC 20260301174846](./docs/rfcs/20260301174846.md)
+
 ### Bug Fixes
 
 - **[Windows] Registry key not written correctly** — the native messaging host manifest was not being registered in the Windows registry after running the installer, causing the browser to fail to start the API even when running as administrator. Fixed by:

@@ -122,12 +122,29 @@ class TestGetMessage(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class TestDeleteCrowbarfile(unittest.TestCase):
-    def test_deletes_existing_file(self):
+    def test_deletes_existing_file_if_owned_by_current_process(self):
         with tempfile.NamedTemporaryFile(delete=False) as f:
             path = f.name
-        with patch.object(yomitan_api, "crowbarfile_path", path):
-            yomitan_api.delete_crowbarfile()
-        self.assertFalse(os.path.exists(path))
+            f.write(str(os.getpid()).encode())
+        try:
+            with patch.object(yomitan_api, "crowbarfile_path", path):
+                yomitan_api.delete_crowbarfile()
+            self.assertFalse(os.path.exists(path), "Should delete file if PID matches")
+        finally:
+            if os.path.exists(path):
+                os.remove(path)
+
+    def test_does_not_delete_if_owned_by_other_process(self):
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            path = f.name
+            f.write(b"999999")
+        try:
+            with patch.object(yomitan_api, "crowbarfile_path", path):
+                yomitan_api.delete_crowbarfile()
+            self.assertTrue(os.path.exists(path), "Should NOT delete file if PID doesn't match")
+        finally:
+            if os.path.exists(path):
+                os.remove(path)
 
     def test_does_not_raise_if_file_missing(self):
         with patch.object(yomitan_api, "crowbarfile_path", "/nonexistent/path/.crowbar"):
@@ -195,6 +212,15 @@ class TestEnsureSingleInstance(unittest.TestCase):
                 mock_stdin.isatty.return_value = True
                 yomitan_api.ensure_single_instance()
                 mock_exit.assert_called_once_with(0)
+
+                # Now simulate the module-level finally block
+                yomitan_api.delete_crowbarfile()
+
+                # Verify file still exists because it's owned by mock PID 987654321, not us
+                self.assertTrue(os.path.exists(path), "Crowbar file should persist after TTY exit-on-conflict")
+                with open(path) as f:
+                    content = f.read().strip()
+                self.assertEqual(content, "987654321")
 
 
 # ---------------------------------------------------------------------------

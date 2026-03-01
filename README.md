@@ -1,4 +1,7 @@
 # Yomitan API
+
+[![Version](https://img.shields.io/badge/version-v1.1.0-blue)](https://github.com/Kuuuube/yomitan-api) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 The Yomitan API provides a native messaging host that allows Yomitan to interact with your local system.
 
 ## Table of Contents
@@ -14,6 +17,7 @@ The Yomitan API provides a native messaging host that allows Yomitan to interact
     - [Windows: Installation fails or Registry keys missing with Windows Store Python](#windows-installation-fails-or-registry-keys-missing-with-windows-store-python)
     - [Windows: `ValueError: cannot read more than 33554432 bytes`](#windows-valueerror-cannot-read-more-than-33554432-bytes)
   - [Release Notes](#release-notes)
+  - [License](#license)
 
 ---
 
@@ -133,5 +137,11 @@ This error appears in an old version of `yomitan_api.py`. Update to v1.1.0 — i
 ## Release Notes
 
 [release-notes.md](./release-notes.md)
+
+[Return to Top](#table-of-contents)
+
+## License
+
+[GPL v3](./LICENSE)
 
 [Return to Top](#table-of-contents)

@@ -90,9 +90,13 @@ If the Yomitan settings page shows "Failed to fetch" after running the installer
 
 3. **Restart your browser** after installation.
 
-### Windows: Installation fails with Windows Store Python
+### Windows: Installation fails or Registry keys missing with Windows Store Python
 
-If Python was installed from the Microsoft Store (`WindowsApps\...` in `sys.executable`), the generated `.bat` file may fail to launch. The installer automatically detects this and writes `python` instead of the full path. If you still have issues, install Python from [python.org](https://www.python.org/downloads/) instead.
+If Python was installed from the Microsoft Store (`WindowsApps\...` in `sys.executable`):
+1. **Registry Write Failures**: Due to the UWP sandbox, the Windows Store version of Python may fail to write the necessary registry keys even when run as administrator. If you don't see the registry keys mentioned in step 2 above, this is likely the cause.
+2. **Launch Failures**: The generated `.bat` file may fail to launch due to App Execution Alias restrictions.
+
+The installer attempts to work around launch issues, but if you encounter registry failures, you **must** install a standard version of Python from [python.org](https://www.python.org/downloads/) instead.
 
 ### Windows: `ValueError: cannot read more than 33554432 bytes`
 

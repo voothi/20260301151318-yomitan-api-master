@@ -166,6 +166,17 @@ def manifest_install_file(manifest: str, path: str, filename: str) -> None:
 platform_data = platform_data_get()
 
 browsers = list(platform_data["manifest_install_data"].keys())
+
+if platform_data["platform"] == "windows" and "WindowsApps" in sys.executable:
+    print("-" * 50)
+    print("WARNING: You are using Python from the Windows Store.")
+    print("Due to sandboxing, this version may fail to write to the")
+    print("registry, causing the installation to be incomplete.")
+    print("If the 'Test' button fails later, please install Python")
+    print("from python.org and run this script again.")
+    print("-" * 50)
+    print()
+
 print("0: all (recommended)")
 for i, browser in enumerate(browsers):
     print(f"{i + 1}: {browser}")

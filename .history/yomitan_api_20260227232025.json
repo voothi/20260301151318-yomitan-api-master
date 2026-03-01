@@ -1,0 +1,10 @@
+{
+    "name": "yomitan_api",
+    "description": "Yomitan API",
+    "type": "stdio",
+    "path": "U:\\voothi\\20260227225946-yomitan-api\\yomitan-api-master\\yomitan_api.bat",
+    "allowed_origins": [
+        "chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/",
+        "likgccmbimhjbgkjambclfkhldnlhbnn"
+    ]
+}

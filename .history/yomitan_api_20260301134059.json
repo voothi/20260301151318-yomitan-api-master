@@ -1,0 +1,9 @@
+{
+    "name": "yomitan_api",
+    "description": "Yomitan API",
+    "type": "stdio",
+    "path": "C:\\yomitan-api-master\\yomitan_api.bat",
+    "allowed_origins": [
+        "chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/"
+    ]
+}

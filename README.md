@@ -12,6 +12,7 @@ The Yomitan API provides a native messaging host that allows Yomitan to interact
   - [How to find your extension ID](#how-to-find-your-extension-id)
   - [API Paths](#api-paths)
   - [Examples](#examples)
+  - [Tests](#tests)
   - [Troubleshooting](#troubleshooting)
     - [Windows: API not detected after installation](#windows-api-not-detected-after-installation)
     - [Windows: Installation fails or Registry keys missing with Windows Store Python](#windows-installation-fails-or-registry-keys-missing-with-windows-store-python)
@@ -104,6 +105,18 @@ By default, the api is hosted on `http://127.0.0.1:19633`. To change this, edit 
 ## Examples
 
 [Yomitan API Request Example Python](./request_example.py)
+
+[Return to Top](#table-of-contents)
+
+## Tests
+
+This project includes internal unit tests for both the installer and the API server to ensure reliability across platforms.
+
+To run the tests, execute:
+
+```bash
+python -m unittest discover -s tests -v
+```
 
 [Return to Top](#table-of-contents)
 

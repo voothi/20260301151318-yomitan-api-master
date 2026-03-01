@@ -1,4 +1,21 @@
 # Yomitan API
+The Yomitan API provides a native messaging host that allows Yomitan to interact with your local system.
+
+## Table of Contents
+
+- [Yomitan API](#yomitan-api)
+  - [Table of Contents](#table-of-contents)
+  - [Installation](#installation)
+  - [How to find your extension ID](#how-to-find-your-extension-id)
+  - [API Paths](#api-paths)
+  - [Examples](#examples)
+  - [Troubleshooting](#troubleshooting)
+    - [Windows: API not detected after installation](#windows-api-not-detected-after-installation)
+    - [Windows: Installation fails or Registry keys missing with Windows Store Python](#windows-installation-fails-or-registry-keys-missing-with-windows-store-python)
+    - [Windows: `ValueError: cannot read more than 33554432 bytes`](#windows-valueerror-cannot-read-more-than-33554432-bytes)
+  - [Release Notes](#release-notes)
+
+---
 
 ## Installation
 
@@ -14,7 +31,7 @@
 
 2. [Download](https://github.com/Kuuuube/yomitan-api/archive/master.zip) and extract this repository to the location you wish to install the files.
 
-3. Run `python install_yomitan_api.py` and follow the prompts. Choose `0` (all browsers, recommended) or a specific browser by number. If you do not see any errors, it has successfully installed.
+3. Run `python install_yomitan_api.py` and follow the prompts. Choose `0` (all browsers, recommended) or a specific browser by number. If you do not see any errors, it has successfully installed. **Note: Administrator privileges are normally not required**, as the installer writes to the current user's registry hive (`HKEY_CURRENT_USER`).
 
     **On forks of browsers such as Brave, you may need to install the API onto Chrome as well.**
 
@@ -27,6 +44,8 @@
 6. Go to `General` and enable `Enable Yomitan API`. Yomitan will automatically start the API every time you open your browser when this setting is enabled.
 
 7. Click `More...` and click the `Test` button to see if the Yomitan API was installed correctly. You may need to wait a few seconds after enabling the setting for the native messaging component to start up.
+
+[Return to Top](#table-of-contents)
 
 ## How to find your extension ID
 
@@ -58,6 +77,8 @@ If you have built Yomitan from source, you need to obtain the extension ID for Y
 
     - Rerun the script as seen above and when it displays `Add more extension IDs`, paste the extension ID **with the brackets** in the input. It should work. Continue with the tutorial.
 
+[Return to Top](#table-of-contents)
+
 ## API Paths
 
 By default, the api is hosted on `http://127.0.0.1:19633`. To change this, edit `ADDR` and `PORT` in `yomitan_api.py`.
@@ -74,9 +95,13 @@ By default, the api is hosted on `http://127.0.0.1:19633`. To change this, edit 
 
 - [/tokenize](./docs/api_paths/tokenize.md)
 
+[Return to Top](#table-of-contents)
+
 ## Examples
 
 [Yomitan API Request Example Python](./request_example.py)
+
+[Return to Top](#table-of-contents)
 
 ## Troubleshooting
 
@@ -84,7 +109,7 @@ By default, the api is hosted on `http://127.0.0.1:19633`. To change this, edit 
 
 If the Yomitan settings page shows "Failed to fetch" after running the installer:
 
-1. **Re-run the installer** — make sure to run it with a standard Python install (not Windows Store Python, see below). The installer will prompt `Choose browser (default 0):` — press Enter to install for all browsers at once. **Note: Administrator privileges are normally not required**, as the installer writes to the current user's registry hive (`HKEY_CURRENT_USER`).
+1. **Re-run the installer** — make sure to run it with a standard Python install (not Windows Store Python, see below). The installer will prompt `Choose browser (default 0):` — press Enter to install for all browsers at once.
 
 2. **Check the registry** — open `regedit` and verify that `HKEY_CURRENT_USER\SOFTWARE\<Browser>\NativeMessagingHosts\yomitan_api` exists and its `(Default)` value points to the correct `.json` file. If the key is missing after running the script, Check your antivirus or permissions for the script folder itself.
 
@@ -103,6 +128,10 @@ If Python was installed from the Microsoft Store (`WindowsApps\...` in `sys.exec
 
 This error appears in an old version of `yomitan_api.py`. Update to v1.1.0 — it includes a guard that returns `None` instead of attempting the oversized read.
 
+[Return to Top](#table-of-contents)
+
 ## Release Notes
 
 [release-notes.md](./release-notes.md)
+
+[Return to Top](#table-of-contents)

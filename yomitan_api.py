@@ -64,7 +64,7 @@ def ensure_single_instance() -> None:
 
             os.kill(old_pid, signal.SIGTERM if sys.platform != "win32" else 15)
             time.sleep(PROCESS_STARTUP_WAIT)
-        except (OSError, ValueError, ProcessLookupError, PermissionError):
+        except Exception:
             pass
 
     try:

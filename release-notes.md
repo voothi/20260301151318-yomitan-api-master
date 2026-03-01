@@ -1,5 +1,17 @@
 # Release Notes
 
+## v1.1.3
+
+[RFC 20260301202926 (Emergency Fix: Singleton Crash on Windows)](./docs/rfcs/20260301202926.md)
+
+### Bug Fixes
+
+- **[Server] Fix startup crash on Windows** — broaden the exception handling in `ensure_single_instance` to catch `SystemError` wrapping `[WinError 87]`. This ensures the server starts correctly even when platform-specific process management errors occur.
+- **[Tests] Added regression test for singleton crashes** — verified the fix with a new unit test simulating a `SystemError` from `os.kill`.
+
+---
+
+
 ## v1.1.2
 
 [RFC 20260301194309 (Version Fix & NM Connectivity Improvements)](./docs/rfcs/20260301194309.md)

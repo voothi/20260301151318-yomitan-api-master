@@ -166,6 +166,21 @@ class TestEnsureSingleInstance(unittest.TestCase):
                 # Should not raise
                 yomitan_api.ensure_single_instance()
 
+    def test_no_crash_on_system_error(self):
+        """Simulate Windows SystemError from os.kill(pid, 0)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, ".crowbar")
+            with open(path, "w") as f:
+                f.write("1234")
+            with patch.object(yomitan_api, "crowbarfile_path", path), \
+                 patch("sys.stdin.isatty", return_value=False), \
+                 patch("os.kill", side_effect=SystemError("returned a result with an error set")):
+                # Should catch SystemError and proceed to write current PID
+                yomitan_api.ensure_single_instance()
+            with open(path) as f:
+                content = f.read().strip()
+        self.assertEqual(content, str(os.getpid()))
+
 
 # ---------------------------------------------------------------------------
 # send_message / send_response (smoke tests)

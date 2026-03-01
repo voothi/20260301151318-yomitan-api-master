@@ -20,29 +20,29 @@ MANIFEST_TEMPLATE: dict[str, Any] = {
 BROWSER_DATA = {
     "firefox": {
         "extension_id_key": "allowed_extensions",
-        "extension_ids":["{6b733b82-9261-47ee-a595-2dda294a4d08}"],
+        "extension_ids": ["{6b733b82-9261-47ee-a595-2dda294a4d08}"],
     },
     "chrome": {
         "extension_id_key": "allowed_origins",
-        "extension_ids":["chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/"],
+        "extension_ids": ["chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/"],
     },
     "chromium": {
         "extension_id_key": "allowed_origins",
-        "extension_ids":["chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/"],
+        "extension_ids": ["chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/"],
     },
     "edge": {
         "extension_id_key": "allowed_origins",
-        "extension_ids":["chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/"],
+        "extension_ids": ["chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/"],
     },
     "brave": {
         "extension_id_key": "allowed_origins",
-        "extension_ids":["chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/"],
+        "extension_ids": ["chrome-extension://likgccmbimhjbgkjambclfkhldnlhbnn/"],
     },
 }
 
 PLATFORM_DATA = {
     "linux": {
-        "platform_aliases":[
+        "platform_aliases": [
             "linux",
             "linux2",
             "riscos",
@@ -53,7 +53,7 @@ PLATFORM_DATA = {
         ],
         "manifest_install_data": {
             "firefox": {
-                "methods":["file"],
+                "methods": ["file"],
                 "path": os.path.expanduser("~/.mozilla/native-messaging-hosts/"),
             },
             "chrome": {
@@ -75,7 +75,7 @@ PLATFORM_DATA = {
         },
     },
     "windows": {
-        "platform_aliases":["win32", "cygwin"],
+        "platform_aliases": ["win32", "cygwin"],
         "manifest_install_data": {
             "firefox": {
                 "methods": ["file", "registry"],
@@ -83,7 +83,7 @@ PLATFORM_DATA = {
                 "registry_path": f"SOFTWARE\\Mozilla\\NativeMessagingHosts\\{NAME}",
             },
             "chrome": {
-                "methods":["file", "registry"],
+                "methods": ["file", "registry"],
                 "path": DIR,
                 "registry_path": f"SOFTWARE\\Google\\Chrome\\NativeMessagingHosts\\{NAME}",
             },
@@ -150,10 +150,10 @@ def manifest_get(browser: str, messaging_host_path: str, additional_ids: list) -
     manifest: dict[str, Any] = copy.deepcopy(MANIFEST_TEMPLATE)
     data = BROWSER_DATA[browser]
     manifest["path"] = messaging_host_path
-    
+
     # Directly assign the combined list to avoid Pylance append errors
     manifest[data["extension_id_key"]] = data["extension_ids"] + additional_ids
-    
+
     return json.dumps(manifest, indent=4)
 
 
@@ -172,12 +172,12 @@ for i, browser in enumerate(browsers):
 
 choice = input("Choose browser (default 0): ").strip()
 selected_browsers = (
-    browsers if not choice or choice == "0" else[browsers[int(choice) - 1]]
+    browsers if not choice or choice == "0" else [browsers[int(choice) - 1]]
 )
 
 print("\nUsing default Yomitan extension IDs.")
 print("Add more extension IDs, or press enter to continue")
-additional_extension_ids: list[str] =[]
+additional_extension_ids: list[str] = []
 while True:
     extension_id = input("Extension ID: ").strip()
     if not extension_id:

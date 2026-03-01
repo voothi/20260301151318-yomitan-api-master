@@ -24,6 +24,9 @@ if "yomitan_api" in sys.modules:
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import yomitan_api
 
+# Global overrides for tests to avoid hangs and TTY issues
+yomitan_api.PROCESS_STARTUP_WAIT = 0
+
 
 def _fake_stdin(data: bytes) -> types.SimpleNamespace:
     """Return a fake sys.stdin whose .buffer is an io.BytesIO.
@@ -146,7 +149,7 @@ class TestEnsureSingleInstance(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, ".crowbar")
             with patch.object(yomitan_api, "crowbarfile_path", path), \
-                 patch.object(yomitan_api, "PROCESS_STARTUP_WAIT", 0):
+                 patch("sys.stdin.isatty", return_value=False):
                 yomitan_api.ensure_single_instance()
             with open(path) as f:
                 content = f.read().strip()
@@ -159,7 +162,7 @@ class TestEnsureSingleInstance(unittest.TestCase):
             with open(path, "w") as f:
                 f.write("999999999")
             with patch.object(yomitan_api, "crowbarfile_path", path), \
-                 patch.object(yomitan_api, "PROCESS_STARTUP_WAIT", 0):
+                 patch("sys.stdin.isatty", return_value=False):
                 # Should not raise
                 yomitan_api.ensure_single_instance()
 
@@ -201,13 +204,59 @@ class TestRequestHandler(unittest.TestCase):
         def fake_send_response(h, code, ctype, data):
             responses.append((code, data))
 
-        with patch.object(yomitan_api, "send_response", fake_send_response):
-            yomitan_api.RequestHandler.do_POST(handler)
+        with patch.object(yomitan_api, "send_response", fake_send_response), \
+             patch.object(yomitan_api, "get_message", return_value={"responseStatusCode": 200, "data": {"version": 1}}):
+            yomitan_api.RequestHandler.do_request(handler)
 
         self.assertEqual(len(responses), 1)
         self.assertEqual(responses[0][0], 200)
         result = json.loads(responses[0][1])
-        self.assertIn("version", result)
+        self.assertEqual(result["version"], yomitan_api.YOMITAN_API_NATIVE_MESSAGING_VERSION)
+
+    def test_get_request_on_version_path(self):
+        """GET /serverVersion should now work."""
+        handler = self._make_handler("/serverVersion")
+        handler.command = "GET"
+        responses = []
+
+        def fake_send_response(h, code, ctype, data):
+            responses.append((code, data))
+
+        with patch.object(yomitan_api, "get_message", return_value={"responseStatusCode": 200, "data": {}}), \
+             patch.object(yomitan_api, "send_response", fake_send_response):
+            yomitan_api.RequestHandler.do_request(handler)
+
+        self.assertEqual(responses[0][0], 200)
+
+    def test_nm_failure_returns_503(self):
+        """If send_message fails with OSError (disconnected pipe), return 503."""
+        handler = self._make_handler("/yomitanVersion")
+        responses = []
+
+        def fake_send_response(h, code, ctype, data):
+            responses.append((code, data))
+
+        # Simulate broken pipe/unconnected stdout
+        with patch.object(yomitan_api, "send_message", side_effect=OSError("broken pipe")), \
+             patch.object(yomitan_api, "send_response", fake_send_response):
+            yomitan_api.RequestHandler.do_request(handler)
+
+        self.assertEqual(responses[0][0], 503)
+        self.assertIn("Native messaging connection failed", responses[0][1])
+
+    def test_ensure_single_instance_tty_exits(self):
+        """In a TTY, if another instance is alive, we should warn and exit(0) to protect daemon."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, ".crowbar")
+            with open(path, "w") as f:
+                f.write(str(os.getpid())) # Current process is "already running"
+
+            with patch.object(yomitan_api, "crowbarfile_path", path), \
+                 patch("sys.stdin.isatty", return_value=True), \
+                 patch("sys.exit") as mock_exit, \
+                 patch("builtins.print"):  # Suppress warning output in tests
+                yomitan_api.ensure_single_instance()
+                mock_exit.assert_called_once_with(0)
 
     def test_blacklisted_path_responds_400(self):
         handler = self._make_handler("/favicon.ico")
@@ -216,8 +265,9 @@ class TestRequestHandler(unittest.TestCase):
         def fake_send_response(h, code, ctype, data):
             responses.append((code, data))
 
-        with patch.object(yomitan_api, "send_response", fake_send_response):
-            yomitan_api.RequestHandler.do_POST(handler)
+        with patch.object(yomitan_api, "send_response", fake_send_response), \
+             patch.object(yomitan_api, "get_message", return_value={}):
+            yomitan_api.RequestHandler.do_request(handler)
 
         self.assertEqual(responses[0][0], 400)
 
@@ -234,8 +284,9 @@ class TestRequestHandler(unittest.TestCase):
         def fake_send_response(h, code, ctype, data):
             responses.append((code, data))
 
-        with patch.object(yomitan_api, "send_response", fake_send_response):
-            yomitan_api.RequestHandler.do_POST(handler)
+        with patch.object(yomitan_api, "send_response", fake_send_response), \
+             patch.object(yomitan_api, "get_message", return_value={}):
+            yomitan_api.RequestHandler.do_request(handler)
 
         self.assertTrue(len(responses) > 0)
         self.assertNotEqual(responses[0][0], 500)

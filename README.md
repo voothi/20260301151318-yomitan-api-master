@@ -1,6 +1,7 @@
 # Yomitan API
 
-[![Version](https://img.shields.io/badge/version-v1.1.4-blue)](https://github.com/Kuuuube/yomitan-api) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Version](https://img.shields.io/badge/version-v1.1.6-blue)](https://github.com/Kuuuube/yomitan-api) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 
 The Yomitan API provides a native messaging host that allows Yomitan to interact with your local system.
 

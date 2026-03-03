@@ -10,3 +10,4 @@ yomitan_api_edge.json
 yomitan_api_firefox.json
 yomitan_api.bat
 yomitan_api.json
+venv/

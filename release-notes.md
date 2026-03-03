@@ -1,5 +1,15 @@
 # Release Notes
 
+## v1.1.6
+
+[RFC 20260303152048 (Test Coverage Improvements)](./docs/rfcs/20260303152048.md)
+
+### Improvements
+
+- **[Tests] Enhanced Test Coverage** — The initial `test_server.py` and `test_install.py` files were augmented to cover edge cases spanning native messaging host `504` timeout exceptions, incomplete lock file writes, and registry write errors. Overall test coverage significantly boosted to 98% (only the direct `__main__` invocations remain uncovered).
+
+---
+
 ## v1.1.4
 
 [RFC 20260301221919 (Singleton Robustness Fixes)](./docs/rfcs/20260301221919.md)

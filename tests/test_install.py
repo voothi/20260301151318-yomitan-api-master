@@ -162,5 +162,87 @@ class TestWindowsRegistryPath(unittest.TestCase):
                 self.assertIn("yomitan_api", data["registry_path"])
 
 
+class TestMain(unittest.TestCase):
+    def setUp(self):
+        self.mod = _load_install_module()
+
+    @patch("builtins.input", side_effect=["0", "", ""])
+    @patch("builtins.print")
+    @patch("os.makedirs")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("shutil.copy")
+    @patch("os.chmod")
+    def test_main_linux_default(self, mock_chmod, mock_copy, mock_open, mock_makedirs, mock_print, mock_input):
+        with patch.object(self.mod.sys, "platform", "linux"):
+            self.mod.main()
+        mock_makedirs.assert_called()
+        mock_open.assert_called()
+
+    @patch("builtins.input", side_effect=["1", "", ""])
+    @patch("builtins.print")
+    @patch("os.makedirs")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_main_windows_firefox_only(self, mock_open, mock_makedirs, mock_print, mock_input):
+        fake_winreg = MagicMock()
+        with patch.object(self.mod.sys, "platform", "win32"), \
+             patch.dict("sys.modules", {"winreg": fake_winreg}):
+             self.mod.main()
+        # Verify winreg was called
+        fake_winreg.CreateKey.assert_called()
+        fake_winreg.SetValueEx.assert_called()
+
+    @patch("builtins.input", side_effect=["0", "", ""])
+    @patch("builtins.print")
+    @patch("os.makedirs")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_main_windows_apps_warning(self, mock_open, mock_makedirs, mock_print, mock_input):
+        fake_winreg = MagicMock()
+        with patch.object(self.mod.sys, "platform", "win32"), \
+             patch.object(self.mod.sys, "executable", "C:\\Program Files\\WindowsApps\\python.exe"), \
+             patch.dict("sys.modules", {"winreg": fake_winreg}):
+             self.mod.main()
+        # Verify it prints warning
+        mock_print.assert_any_call("WARNING: You are using Python from the Windows Store.")
+
+    @patch("builtins.input", side_effect=["0", "custom-id", ""])
+    @patch("builtins.print")
+    @patch("os.makedirs")
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("shutil.copy")
+    @patch("os.chmod")
+    def test_main_mac_chmod_and_custom_id(self, mock_chmod, mock_copy, mock_open, mock_makedirs, mock_print, mock_input):
+        with patch.object(self.mod.sys, "platform", "darwin"):
+             self.mod.main()
+        mock_chmod.assert_called()
+        mock_copy.assert_called()
+
+    @patch("builtins.input", side_effect=["0", ""])
+    @patch("builtins.print")
+    @patch("os.makedirs", side_effect=Exception("makedirs failed"))
+    @patch("builtins.open", new_callable=mock_open)
+    def test_main_file_creation_error_handled(self, mock_open, mock_makedirs, mock_print, mock_input):
+        with patch.object(self.mod.sys, "platform", "linux"):
+            self.mod.main()
+            
+    @patch("builtins.input", side_effect=["1", "", ""])
+    @patch("builtins.print")
+    @patch("os.makedirs")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_main_winreg_error_handled(self, mock_open, mock_makedirs, mock_print, mock_input):
+        fake_winreg = MagicMock()
+        fake_winreg.CreateKey.side_effect = Exception("registry error")
+        with patch.object(self.mod.sys, "platform", "win32"), \
+             patch.dict("sys.modules", {"winreg": fake_winreg}):
+             self.mod.main()
+             
+    @patch("builtins.input", side_effect=["0", ""])
+    @patch("builtins.print")
+    @patch("os.makedirs")
+    @patch("shutil.copy", side_effect=Exception("copy error"))
+    def test_main_mac_copy_error_handled(self, mock_copy, mock_makedirs, mock_print, mock_input):
+        with patch.object(self.mod.sys, "platform", "darwin"):
+             self.mod.main()
+
+
 if __name__ == "__main__":
     unittest.main()

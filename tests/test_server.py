@@ -156,6 +156,10 @@ class TestDeleteCrowbarfile(unittest.TestCase):
              patch("os.remove", side_effect=PermissionError("denied")):
             yomitan_api.delete_crowbarfile()
 
+    def test_exception_during_read(self):
+        with patch("os.path.exists", side_effect=OSError("random error")):
+            yomitan_api.delete_crowbarfile()
+
 
 # ---------------------------------------------------------------------------
 # ensure_single_instance
@@ -234,6 +238,30 @@ class TestEnsureSingleInstance(unittest.TestCase):
                 with open(path) as f:
                     content = f.read().strip()
                 self.assertEqual(content, "987654321")
+
+    def test_ensure_single_instance_kills_old_daemon(self):
+        """Not a TTY, if another instance is alive, we kill it."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, ".crowbar")
+            with open(path, "w") as f:
+                f.write("987654321") # Mock PID
+
+            with patch.object(yomitan_api, "crowbarfile_path", path), \
+                 patch("yomitan_api.sys.stdin.isatty", return_value=False), \
+                 patch("time.sleep"), \
+                 patch("os.kill") as mock_kill:
+                yomitan_api.ensure_single_instance()
+                # Assuming Windows doesn't evaluate the ternary operator here since we mock it, or it sends 15 or SIGTERM
+                # Should have been called twice (once for check, once for actual kill)
+                self.assertEqual(mock_kill.call_count, 2)
+
+    def test_crowbar_write_exception(self):
+        """If crowbar write fails, logs error but does not crash."""
+        with patch.object(yomitan_api, "crowbarfile_path", "/dev/null"), \
+             patch("builtins.open", side_effect=OSError("write permission denied")), \
+             patch("yomitan_api.error_log") as mock_error_log:
+            yomitan_api.ensure_single_instance()
+            mock_error_log.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -345,6 +373,78 @@ class TestRequestHandler(unittest.TestCase):
 
         self.assertTrue(len(responses) > 0)
         self.assertNotEqual(responses[0][0], 500)
+
+    def test_real_send_response(self):
+        """Test the real send_response function."""
+        handler = MagicMock()
+        handler.wfile = io.BytesIO()
+        yomitan_api.send_response(handler, 200, "application/json", '{"test": 1}')
+        handler.send_response.assert_called_with(200)
+        handler.end_headers.assert_called_once()
+        self.assertEqual(handler.wfile.getvalue(), b'{"test": 1}')
+
+    def test_invalid_http_methods(self):
+        """Test do_HEAD, do_PUT, etc."""
+        handler = MagicMock()
+        handler.command = "PUT"
+        yomitan_api.handle_invalid_method(handler)
+        handler.send_error.assert_called_with(405, "PUT method not allowed")
+        handler.end_headers.assert_called_once()
+        
+        # Test routing in RequestHandler without instantiating
+        self.assertEqual(yomitan_api.RequestHandler.do_PUT, yomitan_api.handle_invalid_method)
+        self.assertEqual(yomitan_api.RequestHandler.do_DELETE, yomitan_api.handle_invalid_method)
+
+    def test_do_request_timeout_504(self):
+        """If Yomitan browser extension doesn't respond or sends None, 504 is returned."""
+        handler = self._make_handler("/findTerms")
+        responses = []
+
+        def fake_send_response(h, code, ctype, data):
+            responses.append((code, data))
+
+        with patch.object(yomitan_api, "send_message"), \
+             patch.object(yomitan_api, "send_response", fake_send_response), \
+             patch.object(yomitan_api, "get_message", return_value=None):
+            yomitan_api.RequestHandler.do_request(handler)
+
+        self.assertEqual(responses[0][0], 504)
+        self.assertIn("No response from extension", responses[0][1])
+
+    def test_do_request_200(self):
+        """A normal forwarded request returns the status code from youmitan."""
+        handler = self._make_handler("/findTerms")
+        responses = []
+
+        def fake_send_response(h, code, ctype, data):
+            responses.append((code, data))
+
+        with patch.object(yomitan_api, "send_message"), \
+             patch.object(yomitan_api, "send_response", fake_send_response), \
+             patch.object(yomitan_api, "get_message", return_value={"responseStatusCode": 201, "data": {"test": 1}}):
+            yomitan_api.RequestHandler.do_request(handler)
+
+        self.assertEqual(responses[0][0], 201)
+
+    def test_do_request_internal_error_500(self):
+        """An unhandled exception returns a 500 error."""
+        handler = self._make_handler("/findTerms")
+        responses = []
+
+        def fake_send_response(h, code, ctype, data):
+            responses.append((code, data))
+
+        with patch.object(yomitan_api, "send_message", side_effect=ValueError("Some bug")), \
+             patch.object(yomitan_api, "send_response", fake_send_response), \
+             patch.object(yomitan_api, "error_log"):
+            yomitan_api.RequestHandler.do_request(handler)
+
+        self.assertEqual(responses[0][0], 500)
+
+    def test_log_message_does_nothing(self):
+        # coverage hit for log_message
+        handler = MagicMock()
+        yomitan_api.RequestHandler.log_message(handler, "format", "arg1")
 
 
 if __name__ == "__main__":
